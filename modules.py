@@ -111,14 +111,15 @@ class SelfAttention(layers.Layer):
     def __init__(self, units):
         super().__init__()
 
-        self.mha = layers.MultiHeadAttention(num_heads=4, key_dim=units)
+        self.multi_head_attention = layers.MultiHeadAttention(num_heads=4, key_dim=units)
 
-        self.ln = layers.LayerNormalization()
+        self.layer_norm = layers.LayerNormalization()
 
-        self.ff_self = tf.keras.Sequential([
+        self.projection_linear = tf.keras.Sequential([
             layers.LayerNormalization(),
             layers.Dense(units),
             layers.Activation(activation=tf.keras.activations.gelu),
+
             layers.Dense(units)
         ])
 
@@ -127,19 +128,19 @@ class SelfAttention(layers.Layer):
     #     key_shape = (input_shape[0], input_shape[1] * input_shape[2], input_shape[3])
     #     value_shape = (input_shape[0], input_shape[1] * input_shape[2], input_shape[3])
     #
-    #     self.mha._build_from_signature(query_shape, value_shape, key_shape)
+    #     self.multi_head_attention._build_from_signature(query_shape, value_shape, key_shape)
 
     def call(self, x):
         x_shape = tf.shape(x)
 
-        x = rearrange(x, 'b h w c -> b (h w) c', h=x_shape[-3], w=x_shape[-2])
+        x = rearrange(x, 'b h w c -> b (h w) c', h=x_shape[1], w=x_shape[2])
 
-        x_ln = self.ln(x)
+        x_layer_norm = self.layer_norm(x)
 
-        attention_value = self.mha(x_ln, x_ln, x_ln)
+        attention_value = self.multi_head_attention(x_layer_norm, x_layer_norm, x_layer_norm)
         attention_value = attention_value + x
 
-        attention_value = self.ff_self(attention_value) + attention_value
-        attention_value = rearrange(attention_value, 'b (h w) c -> b h w c', h=x_shape[-3], w=x_shape[-2])
+        attention_value = self.projection_linear(attention_value) + attention_value
+        attention_value = rearrange(attention_value, 'b (h w) c -> b h w c', h=x_shape[1], w=x_shape[2])
 
         return attention_value
