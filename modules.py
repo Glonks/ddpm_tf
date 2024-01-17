@@ -3,6 +3,7 @@ import math
 
 from tensorflow.keras import layers
 from einops import rearrange, repeat
+from collections.abc import Iterable
 
 
 class DoubleConv(layers.Layer):
@@ -11,15 +12,15 @@ class DoubleConv(layers.Layer):
 
         self.residual = residual
 
-        if not mid_filters:
-            mid_filters = filters
+        if not isinstance(filters, Iterable):
+            filters = [filters] * 2
 
         self.double_conv = tf.keras.Sequential([
-            layers.Conv2D(filters=mid_filters, kernel_size=3, padding='same', use_bias=False),
+            layers.Conv2D(filters=filters[0], kernel_size=3, padding='same', use_bias=False),
             layers.GroupNormalization(groups=1),
             layers.Activation(activation=tf.keras.activations.gelu),
 
-            layers.Conv2D(filters=filters, kernel_size=3, padding='same', use_bias=False),
+            layers.Conv2D(filters=filters[1], kernel_size=3, padding='same', use_bias=False),
             layers.GroupNormalization(groups=1),
         ])
 
@@ -84,7 +85,7 @@ class Up(layers.Layer):
 
         self.conv = tf.keras.Sequential([
             DoubleConv(filters[0], residual=True),
-            DoubleConv(filters[1], filters[0] // 2)
+            DoubleConv([filters[0] // 2, filters[1]])
         ])
 
         self.embedding_linear = tf.keras.Sequential([
