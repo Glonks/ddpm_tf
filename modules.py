@@ -7,7 +7,7 @@ from collections.abc import Iterable
 
 
 class DoubleConv(layers.Layer):
-    def __init__(self, filters, mid_filters=None, residual=False):
+    def __init__(self, filters, residual=False):
         super().__init__()
 
         self.residual = residual
