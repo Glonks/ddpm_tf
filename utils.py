@@ -25,7 +25,7 @@ def postprocess_images(x):
     x = tf.clip_by_value(x, -1.0, 1.0)
 
     x = (x + 1) * 127.5
-    x = tf.clip_by_value(x, -255.0, 255.0)
+    x = tf.clip_by_value(x, 0, 255.0)
 
     x = x.numpy().astype('uint8')
 

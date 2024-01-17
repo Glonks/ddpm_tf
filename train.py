@@ -41,7 +41,8 @@ if __name__ == '__main__':
         beta_end=args.beta_end,
         timesteps=args.timesteps,
         input_image_shape=(args.image_size, args.image_size, 3),
-        decay=args.decay
+        use_ema=args.use_ema,
+        decay=args.decay,
     )
 
     model.compile(
